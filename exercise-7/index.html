@@ -69,11 +69,18 @@
                 <td>สินค้า</td>
                 <td>จำนวน</td>
                 <td>ราคา</td>
+                <td>ลบ</td>
                 <!-- PROBLEM 7.3 -->
                 <!-- <td>ลบ</td>  -->
               </tr>
             </thead>
             <tbody></tbody>
+            <tfoot>
+              <th></th>
+              <th id="count"></th>
+              <th id="price"></th>
+              <th></th>
+            </tfoot>
             <!-- PROBLEM 7.4 -->
             <!-- <tfoot>
               <th></th>
@@ -129,15 +136,76 @@
   </body>
 
   <script>
+    const table = document.querySelector('#cart')
+    const tBody = table.querySelector('tbody')
+    const tFoot = table.querySelector('tfoot')
+
     // Setup Event Listener
     for (let el of document.getElementsByClassName('product')) {
       el.addEventListener('click', onSelectProduct)
     }
-
+    
     function onSelectProduct (event) {
-      console.log(event.currentTarget)
-      console.log(event.currentTarget.childNodes)
       // TODO: ...
+      const [ name, prePriceTag ] = Array.from(event.currentTarget.children).map(node => node.innerText)
+      const priceTag = getTextBeforeFirstWhiteSpace(prePriceTag)
+      addToCart({
+        name,
+        price: priceTag,
+        count: 1
+      })
+    }
+
+    function processSum() {
+      const { itemCount, sumOfPrice } = Array.from(tBody.children)
+        .reduce((cumulatedValue, currentNode) => {
+          const currentCount = Number.parseInt(currentNode.querySelector('.cart-item-count').innerText)
+          const currentPrice = Number.parseFloat(currentNode.querySelector('.cart-item-price').innerText)
+          return {
+            itemCount: cumulatedValue.itemCount + currentCount,
+            sumOfPrice: cumulatedValue.sumOfPrice + currentPrice
+          }
+        }, 
+        { // initial value
+          itemCount: 0,
+          sumOfPrice: 0
+        })
+      tFoot.querySelector('#count').innerText = itemCount
+      tFoot.querySelector('#price').innerText = sumOfPrice.toFixed(2)
+
+    }
+
+    function addToCart(item) {
+
+      // adding
+      const { name, price, count } = item
+      const row = document.createElement('tr')
+      
+      const deleteButtonContainer = document.createElement('td')
+      const deleteButton = document.createElement('button')
+      deleteButtonContainer.appendChild(deleteButton)
+      deleteButton.innerText = 'DEL'
+      deleteButton.addEventListener('click', () => {
+        row.remove()
+        processSum()
+      })
+
+      row.innerHTML = `
+        <td>${name}</td>
+        <td class='cart-item-count'>${count}</td>
+        <td class='cart-item-price'>${price}</td>
+      `
+      row.insertAdjacentElement("beforeend", deleteButtonContainer)
+      tBody.insertAdjacentElement("beforeend", row)
+
+      processSum()
+    }
+
+    // util functions goes under here
+    function getTextBeforeFirstWhiteSpace(input) {
+      // TODO: ให้ทำการตัดนามสกุลออกโดยใช้ indexOf() และ substring()
+      const indexOfSeparator = input.indexOf(' ')
+      return input.substring(0, indexOfSeparator)
     }
   </script>
 </html>
